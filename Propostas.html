@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Propostas - Performance Ocupacional</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0B3C5D;
+            --secondary: #328CC1;
+            --accent: #D9B310;
+            --light: #F5F5F5;
+            --dark: #333333;
+            --white: #FFFFFF;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: var(--dark);
+            padding: 20px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(217, 179, 16, 0.3);
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            max-width: 160px;
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .company-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .company-name {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .company-tagline {
+            color: var(--secondary);
+            font-size: 1rem;
+            font-weight: 400;
+        }
+        
+        .date-display {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(11, 60, 93, 0.2);
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin: 30px 0;
+            text-align: center;
+            font-weight: 700;
+            font-size: 2.2rem;
+            position: relative;
+        }
+        
+        h1::after {
+            content: "";
+            display: block;
+            width: 100px;
+            height: 4px;
+            background: var(--accent);
+            margin: 10px auto;
+            border-radius: 2px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-title {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent);
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary);
+            font-size: 1.05rem;
+        }
+        
+        .required::after {
+            content: " *";
+            color: var(--danger);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e1e5eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #fafbfc;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--secondary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(50, 140, 193, 0.2);
+            background-color: white;
+        }
+        
+        .items-table-container {
+            overflow-x: auto;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .items-table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+        
+        .items-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .items-table tr:hover {
+            background-color: #eef5ff;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(50, 140, 193, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 140, 193, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-add {
+            background: linear-gradient(135deg, var(--accent), #c19c0e);
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(217, 179, 16, 0.3);
+        }
+        
+        .btn-add:hover {
+            box-shadow: 0 6px 20px rgba(217, 179, 16, 0.4);
+        }
+        
+        .btn-image {
+            background: linear-gradient(135deg, #6610f2, #5a0dc9);
+            box-shadow: 0 4px 15px rgba(102, 16, 242, 0.3);
+        }
+        
+        .btn-image:hover {
+            box-shadow: 0 6px 20px rgba(102, 16, 242, 0.4);
+        }
+        
+        .payment-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .payment-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e1e5eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #fafbfc;
+        }
+        
+        .payment-option:hover {
+            border-color: var(--secondary);
+            background-color: #f0f8ff;
+        }
+        
+        .payment-option input {
+            width: auto;
+            margin-right: 12px;
+        }
+        
+        .payment-option input:checked + label {
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .days-input {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e1e5eb;
+        }
+        
+        .days-input.active {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .days-input label {
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        .days-input input {
+            width: 100px;
+            margin: 0;
+        }
+        
+        .info-section {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .info-section h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            margin-bottom: 10px;
+        }
+        
+        .info-item strong {
+            color: var(--primary);
+        }
+        
+        .acceptance-section {
+            background: linear-gradient(135deg, var(--primary), #092d47);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 35px 0;
+        }
+        
+        .acceptance-section h3 {
+            color: var(--accent);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .acceptance-section p {
+            margin-bottom: 15px;
+            line-height: 1.7;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .export-options {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .proposal-preview {
+            margin-top: 50px;
+            padding: 30px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .logo-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .days-input {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .days-input input {
+                width: 100%;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .export-options {
+                flex-direction: column;
+            }
+        }
+        
+        /* Estilos para a proposta gerada (igual ao app) */
+        .proposal-generated {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        
+        .proposal-generated .header {
+            text-align: center;
+            border-bottom: 2px solid #0B3C5D;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .proposal-generated .logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        
+        .proposal-generated h1 {
+            color: #0B3C5D;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .proposal-generated .info-section {
+            margin-bottom: 20px;
+        }
+        
+        .proposal-generated .info-section h2 {
+            color: #0B3C5D;
+            font-size: 18px;
+            border-bottom: 1px solid #D9B310;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .proposal-generated .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .proposal-generated .info-item {
+            margin-bottom: 8px;
+        }
+        
+        .proposal-generated .info-item strong {
+            color: #0B3C5D;
+        }
+        
+        .proposal-generated table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .proposal-generated table th {
+            background-color: #0B3C5D;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .proposal-generated table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .proposal-generated table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .proposal-generated .total-row {
+            font-weight: bold;
+            background-color: #e9ecef !important;
+        }
+        
+        .proposal-generated .payment-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .proposal-generated .billing-info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #328CC1;
+        }
+        
+        .proposal-generated .acceptance-section {
+            background-color: #0B3C5D;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 30px 0;
+        }
+        
+        .proposal-generated .acceptance-section h3 {
+            color: #D9B310;
+            margin-bottom: 15px;
+        }
+        
+        .proposal-generated .acceptance-section p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .proposal-generated .validity {
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+        }
+        
+        .proposal-generated .signature-area {
+            margin-top: 40px;
+            text-align: right;
+        }
+        
+        .proposal-generated .signature-line {
+            margin-top: 60px;
+            border-top: 1px solid #333;
+            display: inline-block;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="Logo1.png" alt="Performance Ocupacional" class="logo" onerror="this.src='image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjYwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjx0ZXh0IHg9IjEwIiB5PSIzNSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMEIzQzVEIj5HUlVQT1BlcmZvcm1hbmNlTUVESUNJTkEgRSBTRUdVUkFOw4dBRE8gRE8gVFJBQkFMSE88L3RleHQ+PC9zdmc+'" />
+                <div class="company-info">
+                    <div class="company-name">Performance Ocupacional</div>
+                    <div class="company-tagline">Excelência em Saúde e Segurança Ocupacional</div>
+                </div>
+            </div>
+            <div class="date-display" id="current-date"></div>
+        </header>
+        
+        <h1>Gerador de Proposta Comercial</h1>
+        
+        <form id="proposal-form">
+            <div class="card">
+                <h2 class="card-title">Informações do Cliente</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="client-name" class="required">Nome da Empresa Cliente</label>
+                        <input type="text" id="client-name" required placeholder="Ex: Construtora ABC Ltda (Matriz)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contract-reference" class="required">Referência do Contrato</label>
+                        <input type="text" id="contract-reference" required placeholder="Ex: Contrato com Obra XYZ">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="responsible-person" class="required">Responsável pelo Aceite da Proposta</label>
+                        <input type="text" id="responsible-person" required placeholder="Nome do responsável">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="responsible-phone" class="required">Telefone do Responsável</label>
+                        <input type="tel" id="responsible-phone" required placeholder="(XX) XXXXX-XXXX">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="responsible-email" class="required">Email do Responsável</label>
+                        <input type="email" id="responsible-email" required placeholder="email@empresa.com">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="negotiation-details" class="required">Observações/Detalhes da Negociação</label>
+                    <textarea id="negotiation-details" rows="3" required placeholder="Detalhes relevantes sobre a negociação"></textarea>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title">Itens da Proposta</h2>
+                <div class="items-table-container">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th width="15%">Quantidade</th>
+                                <th width="55%">Item</th>
+                                <th width="30%">Valor (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-body">
+                            <tr>
+                                <td><input type="number" min="1" class="item-quantity" value="1"></td>
+                                <td><input type="text" class="item-description" placeholder="Descrição do item"></td>
+                                <td><input type="number" min="0" step="0.01" class="item-value" placeholder="0,00"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <button type="button" class="btn btn-add" id="add-item">
+                    <i class="fas fa-plus"></i> Adicionar Item
+                </button>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title">Condições Comerciais</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="delivery-time" class="required">Prazo para Entrega</label>
+                        <input type="text" id="delivery-time" required placeholder="Ex: 30 dias úteis">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="required">Forma de Pagamento</label>
+                    <div class="payment-options">
+                        <div class="payment-option">
+                            <input type="radio" id="payment-pix" name="payment" value="PIX" required>
+                            <label for="payment-pix">PIX</label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" id="payment-cash" name="payment" value="À Vista">
+                            <label for="payment-cash">À Vista</label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" id="payment-card" name="payment" value="Cartão de Crédito">
+                            <label for="payment-card">Cartão de Crédito</label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" id="payment-billing" name="payment" value="Faturamento">
+                            <label for="payment-billing">Faturamento</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="billing-days-input" class="days-input">
+                    <label for="billing-days">Número de dias para faturamento:</label>
+                    <input type="number" id="billing-days" min="1" value="30">
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h3>Informações de Faturamento</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Documentação e Treinamentos:</strong> Filial Itaguara/MG<br>
+                        Razão Social: ROBSON LUCIANO SIQUEIRA SICA<br>
+                        Nome Fantasia: PERFORMANCE OCUPACIONAL<br>
+                        CNPJ: 27.708.974/0001-80
+                    </div>
+                    <div class="info-item">
+                        <strong>Exames Médicos Ocupacionais:</strong> Matriz Itatiaiuçu/MG<br>
+                        Razão Social: PERFORMANCE SAÚDE E SEGURANCA OCUPACIONAL LTDA<br>
+                        Nome Fantasia: PERFORMANCE OCUPACIONAL<br>
+                        CNPJ: 13.583.116/0001-42
+                    </div>
+                </div>
+            </div>
+            
+            <div class="acceptance-section">
+                <h3>Aceite da Proposta Comercial</h3>
+                <p>Para dar início à parceria e garantir a execução dos serviços contratados, é necessário apenas a formalização do aceite desta proposta comercial.</p>
+                <p>Após a confirmação, nossa equipe entrará em contato de forma imediata para alinhar todos os detalhes necessários, assegurando o melhor planejamento e a organização das etapas até a entrega final.</p>
+                <p>Esse é o passo decisivo para transformar sua necessidade em resultado, com qualidade, eficiência e total compromisso.</p>
+                <p>Estamos prontos para começar!</p>
+                <p><strong>Validade da proposta: 30 (trinta) dias</strong></p>
+            </div>
+            
+            <div class="actions">
+                <button type="button" class="btn" id="generate-btn">
+                    <i class="fas fa-file-contract"></i> Gerar Proposta
+                </button>
+            </div>
+        </form>
+        
+        <div class="proposal-preview" id="proposal-preview">
+            <div class="proposal-generated" id="proposal-content">
+                <!-- Conteúdo da proposta será gerado aqui -->
+            </div>
+            
+            <div class="export-options">
+                <button type="button" class="btn btn-image" id="image-btn">
+                    <i class="fas fa-download"></i> Salvar como Imagem
+                </button>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© Grupo Performance Ocupacional - Todos os direitos reservados</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Definir data atual
+            const now = new Date();
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('pt-BR', options);
+            
+            // Mostrar/ocultar campo de dias para faturamento
+            document.querySelectorAll('input[name="payment"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const billingDaysInput = document.getElementById('billing-days-input');
+                    if (this.value === 'Faturamento') {
+                        billingDaysInput.classList.add('active');
+                    } else {
+                        billingDaysInput.classList.remove('active');
+                        document.getElementById('billing-days').value = '30';
+                    }
+                });
+            });
+            
+            // Adicionar item
+            document.getElementById('add-item').addEventListener('click', function() {
+                const tbody = document.getElementById('items-body');
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td><input type="number" min="1" class="item-quantity" value="1"></td>
+                    <td><input type="text" class="item-description" placeholder="Descrição do item"></td>
+                    <td><input type="number" min="0" step="0.01" class="item-value" placeholder="0,00"></td>
+                `;
+                tbody.appendChild(newRow);
+            });
+            
+            // Gerar proposta
+            document.getElementById('generate-btn').addEventListener('click', function() {
+                // Validar formulário
+                const form = document.getElementById('proposal-form');
+                if (!form.checkValidity()) {
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                    return;
+                }
+                
+                // Verificar forma de pagamento selecionada
+                const paymentSelected = document.querySelector('input[name="payment"]:checked');
+                if (!paymentSelected) {
+                    alert('Por favor, selecione uma forma de pagamento.');
+                    return;
+                }
+                
+                // Coletar dados do formulário
+                const clientName = document.getElementById('client-name').value;
+                const contractReference = document.getElementById('contract-reference').value;
+                const responsiblePerson = document.getElementById('responsible-person').value;
+                const responsiblePhone = document.getElementById('responsible-phone').value;
+                const responsibleEmail = document.getElementById('responsible-email').value;
+                const negotiationDetails = document.getElementById('negotiation-details').value;
+                const deliveryTime = document.getElementById('delivery-time').value;
+                
+                // Processar forma de pagamento
+                let paymentMethod = paymentSelected.value;
+                if (paymentMethod === 'Faturamento') {
+                    const billingDays = document.getElementById('billing-days').value;
+                    paymentMethod = `Faturamento em ${billingDays} dias`;
+                }
+                
+                // Coletar itens
+                const items = [];
+                let totalValue = 0;
+                
+                document.querySelectorAll('#items-body tr').forEach(row => {
+                    const quantity = row.querySelector('.item-quantity').value;
+                    const description = row.querySelector('.item-description').value;
+                    const value = parseFloat(row.querySelector('.item-value').value) || 0;
+                    
+                    if (description && value > 0) {
+                        const itemTotal = quantity * value;
+                        totalValue += itemTotal;
+                        
+                        items.push({
+                            quantity,
+                            description,
+                            value: value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                            total: itemTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        });
+                    }
+                });
+                
+                if (items.length === 0) {
+                    alert('Por favor, adicione pelo menos um item válido à proposta.');
+                    return;
+                }
+                
+                // Formatar data
+                const date = new Date().toLocaleDateString('pt-BR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                });
+                
+                // Calcular data de validade (30 dias)
+                const validityDate = new Date();
+                validityDate.setDate(validityDate.getDate() + 30);
+                const validityDateStr = validityDate.toLocaleDateString('pt-BR', options);
+                
+                // Gerar conteúdo da proposta no estilo do app
+                let proposalHTML = `
+                    <div class="header">
+                        <img src="Logo1.png" alt="Performance Ocupacional" class="logo" onerror="this.src='image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjYwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjx0ZXh0IHg9IjEwIiB5PSIzNSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMEIzQzVEIj5HUlVQT1BlcmZvcm1hbmNlTUVESUNJTkEgRSBTRUdVUkFOw4dBRE8gRE8gVFJBQkFMSE88L3RleHQ+PC9zdmc+'" />
+                        <h1>PROPOSTA COMERCIAL</h1>
+                        <p><strong>Data:</strong> ${date}</p>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h2>Informações do Cliente</h2>
+                        <div class="info-grid">
+                            <div class="info-item"><strong>Cliente:</strong> ${clientName}</div>
+                            <div class="info-item"><strong>Referência do Contrato:</strong> ${contractReference}</div>
+                            <div class="info-item"><strong>Responsável pelo Aceite:</strong> ${responsiblePerson}</div>
+                            <div class="info-item"><strong>Telefone:</strong> ${responsiblePhone}</div>
+                            <div class="info-item"><strong>Email:</strong> ${responsibleEmail}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h2>Detalhes da Negociação</h2>
+                        <p>${negotiationDetails}</p>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h2>Itens da Proposta</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Qtd</th>
+                                    <th>Item</th>
+                                    <th>Valor Unit.</th>
+                                    <th>Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                items.forEach(item => {
+                    proposalHTML += `
+                        <tr>
+                            <td>${item.quantity}</td>
+                            <td>${item.description}</td>
+                            <td>R$ ${item.value}</td>
+                            <td>R$ ${item.total}</td>
+                        </tr>
+                    `;
+                });
+                
+                proposalHTML += `
+                        <tr class="total-row">
+                            <td colspan="3" align="right"><strong>TOTAL:</strong></td>
+                            <td><strong>R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="info-section">
+                <h2>Condições Comerciais</h2>
+                <div class="info-grid">
+                    <div class="info-item"><strong>Prazo para Entrega:</strong> ${deliveryTime}</div>
+                    <div class="info-item"><strong>Forma de Pagamento:</strong> ${paymentMethod}</div>
+                </div>
+            </div>
+            
+            <div class="billing-info">
+                <h3>Informações de Faturamento</h3>
+                <p><strong>Documentação e Treinamentos:</strong> Filial Itaguara/MG</p>
+                <p>Razão Social: ROBSON LUCIANO SIQUEIRA SICA</p>
+                <p>Nome Fantasia: PERFORMANCE OCUPACIONAL</p>
+                <p>CNPJ: 27.708.974/0001-80</p>
+                <br>
+                <p><strong>Exames Médicos Ocupacionais:</strong> Matriz Itatiaiuçu/MG</p>
+                <p>Razão Social: PERFORMANCE SAÚDE E SEGURANCA OCUPACIONAL LTDA</p>
+                <p>Nome Fantasia: PERFORMANCE OCUPACIONAL</p>
+                <p>CNPJ: 13.583.116/0001-42</p>
+            </div>
+            
+            <div class="acceptance-section">
+                <h3>Aceite da Proposta Comercial</h3>
+                <p>Para dar início à parceria e garantir a execução dos serviços contratados, é necessário apenas a formalização do aceite desta proposta comercial.</p>
+                <p>Após a confirmação, nossa equipe entrará em contato de forma imediata para alinhar todos os detalhes necessários, assegurando o melhor planejamento e a organização das etapas até a entrega final.</p>
+                <p>Esse é o passo decisivo para transformar sua necessidade em resultado, com qualidade, eficiência e total compromisso.</p>
+                <p>Estamos prontos para começar!</p>
+            </div>
+            
+            <div class="validity">
+                <p>Validade da proposta: até ${validityDateStr}</p>
+            </div>
+            
+            <div class="signature-area">
+                <p>Atenciosamente,<br>Equipe Performance Ocupacional</p>
+                <div class="signature-line">Assinatura</div>
+            </div>
+        `;
+                
+                // Exibir proposta
+                document.getElementById('proposal-content').innerHTML = proposalHTML;
+                document.getElementById('proposal-preview').style.display = 'block';
+                
+                // Rolar para a proposta
+                document.getElementById('proposal-preview').scrollIntoView({ behavior: 'smooth' });
+            });
+            
+            // Gerar Imagem
+            document.getElementById('image-btn').addEventListener('click', function() {
+                const proposalPreview = document.getElementById('proposal-preview');
+                
+                if (!proposalPreview.style.display || proposalPreview.style.display === 'none') {
+                    alert('Gere a proposta primeiro antes de criar a imagem.');
+                    return;
+                }
+                
+                // Configurações para a imagem
+                const options = {
+                    quality: 1.0,
+                    width: proposalPreview.scrollWidth,
+                    height: proposalPreview.scrollHeight,
+                    style: {
+                        transform: 'scale(1.0)',
+                        width: proposalPreview.scrollWidth + 'px',
+                        height: proposalPreview.scrollHeight + 'px'
+                    }
+                };
+                
+                // Gerar e baixar a imagem
+                domtoimage.toBlob(proposalPreview, options)
+                    .then(function(blob) {
+                        saveAs(blob, 'proposta-comercial-performance.png');
+                    })
+                    .catch(function(error) {
+                        console.error('Erro ao gerar imagem:', error);
+                        alert('Erro ao gerar imagem. Tente novamente.');
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
